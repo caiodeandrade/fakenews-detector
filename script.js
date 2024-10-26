@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function fetchOpenAIResponse(userMessage) {
         // Substitua 'SUA_CHAVE_DE_API' pela sua chave de API da OpenAI
-        const API_KEY = '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';
+        const API_KEY = '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';
         const API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
 
         // Construir o histórico de mensagens

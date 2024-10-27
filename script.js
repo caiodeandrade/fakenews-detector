@@ -47,65 +47,66 @@ document.addEventListener('DOMContentLoaded', function() {
     function addMessageToChat(sender, text) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', sender);
-
+    
         const messageText = document.createElement('div');
         messageText.classList.add('message-text');
-        messageText.textContent = text;
-
+        messageText.innerHTML = convertMarkdownToHTML(text);
+    
         messageDiv.appendChild(messageText);
         chatWindow.appendChild(messageDiv);
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
     function getBotResponse(userMessage) {
-        fetchOpenAIResponse(userMessage)
-            .then(botMessage => {
-                addMessageToChat('bot', botMessage);
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                addMessageToChat('bot', 'Desculpe, ocorreu um erro.');
-            });
-    }
+        fetchGeminiResponse(userMessage)
+          .then(botMessage => {
+            addMessageToChat('bot', botMessage);
+          })
+          .catch(error => {
+            console.error('Erro:', error);
+            addMessageToChat('bot', 'Desculpe, ocorreu um erro.');
+          });
+      }
 
-    async function fetchOpenAIResponse(userMessage) {
-        // Substitua 'SUA_CHAVE_DE_API' pela sua chave de API da OpenAI
-        const API_KEY = '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';
-        const API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
-
-        // Construir o histórico de mensagens
-        const messages = [
-            { role: 'system', content: systemPrompt },
-            { role: 'assistant', content: assistantInitialMessage },
-            { role: 'user', content: userMessage }
-        ];
-
+    async function fetchGeminiResponse(userMessage) {
+        const API_KEY = 'AIzaSyAodFnU_6hwGZU4StOqvrj_c7FaSrgM0_Y';
+        const API_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+      
+        const requestBody = {
+          contents: [{
+            parts: [{
+              text: userMessage+systemPrompt+assistantInitialMessage
+            }]
+          }]
+        };
+      
         try {
-            const response = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
-                    messages: messages,
-                    max_tokens: 150,
-                    temperature: 0.7
-                })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                const botMessage = data.choices[0].message.content.trim();
-                return botMessage;
-            } else {
-                console.error('Erro da API:', data);
-                throw new Error(data.error.message);
-            }
+          const response = await fetch(API_ENDPOINT + '?key=' + API_KEY, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          });
+      
+          const data = await response.json();
+          if (response.ok)  
+        {
+            const botMessage = data.candidates[0].content.parts[0].text;
+            return botMessage;
+          } else {
+            console.error('API Error:', data);
+            throw new Error(data.error.message);
+          }
         } catch (error) {
-            console.error('Erro na comunicação com a API:', error);
-            throw error;
+          console.error('Error communicating with API:', error);
+          throw error;
         }
+      } 
+
+      function convertMarkdownToHTML(markdown) {
+        return markdown
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Negrito
+            .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Itálico
     }
 });
